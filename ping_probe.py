@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from subprocess import Popen, PIPE
+import datetime
 
 import time
 import re
@@ -9,11 +10,11 @@ class PingError(Exception):
     pass
 
 def ping(address, count):
-    output = Popen(["ping", "-c", str(count), address], stdout=PIPE).communicate()[0]
+    output, err = Popen(["ping", "-q", "-c", str(count), address], stdout=PIPE, stderr=PIPE).communicate()
     try :
         return parse_ping(output)
     except:
-        raise PingError
+        raise PingError(err)
 
 def maybe_int(s):
     if '.' in s:
@@ -57,5 +58,6 @@ def format_result(res):
 if __name__ == "__main__":
     host = sys.argv[1]
     count = int(sys.argv[2])
+    print datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     res = ping(host, count)
     print format_result(res)
