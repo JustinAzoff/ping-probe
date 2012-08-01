@@ -52,7 +52,7 @@ def parse_ping(txt):
     return stats
 
 def format_result(res):
-    fmt = "check=PING ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=%(min).2f avg_rtt=%(avg).2f max_rtt=%(max).2f"
+    fmt = "check=PING host=%(host)s ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=%(min).2f avg_rtt=%(avg).2f max_rtt=%(max).2f"
     return fmt % res
 
 if __name__ == "__main__":
@@ -60,4 +60,5 @@ if __name__ == "__main__":
     count = int(sys.argv[2])
     print datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     res = ping(host, count)
+    res["host"] = host
     print format_result(res)
