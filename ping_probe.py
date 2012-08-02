@@ -60,9 +60,9 @@ def ping_stats(results):
 
 def format_result(res):
     if res["max"]:
-        fmt = "%(time)s check=PING host=%(host)s ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=%(min).2f avg_rtt=%(avg).2f max_rtt=%(max).2f"
+        fmt = "%(time)s check=PING addr=%(host)s ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=%(min).2f avg_rtt=%(avg).2f max_rtt=%(max).2f"
     else:
-        fmt = "%(time)s check=PING host=%(host)s ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=nan avg_rtt=nan max_rtt=nan"
+        fmt = "%(time)s check=PING addr=%(host)s ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=nan avg_rtt=nan max_rtt=nan"
     return fmt % res
 
 def do_ping(host, count, timeout):
