@@ -8,6 +8,7 @@ import sys
 
 import errno
 import socket
+import threading
 
 def tcping(host, port=65533, timeout=2):
     s = socket.socket()
@@ -55,18 +56,31 @@ def ping_stats(results):
 
 def format_result(res):
     if res["max"]:
-        fmt = "check=PING host=%(host)s ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=%(min).2f avg_rtt=%(avg).2f max_rtt=%(max).2f"
+        fmt = "%(time)s check=PING host=%(host)s ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=%(min).2f avg_rtt=%(avg).2f max_rtt=%(max).2f"
     else:
-        fmt = "check=PING host=%(host)s ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=nan avg_rtt=nan max_rtt=nan"
+        fmt = "%(time)s check=PING host=%(host)s ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=nan avg_rtt=nan max_rtt=nan"
     return fmt % res
 
-def main(host, count):
+def do_ping(host, count):
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     res = ping_stats(ping(host, count))
     res["host"] = host
-    print now, format_result(res)
+    res["time"] = now
+    #I'm pretty sure a single print statement is thread safe, so no need for locking
+    print format_result(res)
+
+def go(hosts, count):
+    ts = []
+    for h in hosts:
+        t = threading.Thread(target=do_ping, args=((h, count)))
+        t.start()
+        ts.append(t)
+
+    for t in ts:
+        t.join()
+    
 
 if __name__ == "__main__":
-    host = sys.argv[1]
-    count = int(sys.argv[2])
-    main(host, count)
+    count = int(sys.argv[1])
+    hosts = sys.argv[2:]
+    go(hosts, count)
