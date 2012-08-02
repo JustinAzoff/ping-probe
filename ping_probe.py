@@ -81,6 +81,9 @@ def go(hosts, count, timeout):
     
 
 if __name__ == "__main__":
+    if len(sys.argv) < 4:
+        print "Usage: %s count timeout host [host] [host]" % sys.argv[0]
+        sys.exit(1)
     count = int(sys.argv[1])
     timeout = int(sys.argv[2])
     hosts = sys.argv[3:]
