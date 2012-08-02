@@ -22,7 +22,7 @@ def tcping(host, port=65533, timeout=2):
         s.close()
         end = time.time()
     except Exception, e:
-        if e.errno == errno.ECONNREFUSED:
+        if e[0] == errno.ECONNREFUSED:
             end = time.time()
     if end:
         ms = 1000*(end-start)
@@ -70,8 +70,10 @@ def do_ping(host, count, timeout):
     res = ping_stats(ping(host, count, timeout))
     res["host"] = host
     res["time"] = now
-    with print_lock:
-        print format_result(res)
+    out = format_result(res)
+    print_lock.acquire()
+    print out
+    print_lock.release()
 
 def go(hosts, count, timeout):
     ts = []
