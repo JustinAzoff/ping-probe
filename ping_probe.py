@@ -33,7 +33,9 @@ def ping(host, count, timeout=2):
     for _ in range(count):
         r = tcping(host, timeout=timeout)
         if r:
-            time.sleep((timeout*1000 - r)/1000.0)
+            delay = (timeout*1000 - r)/1000.0
+            if delay > 0:
+                time.sleep(delay)
         res.append(r)
     return res
 
