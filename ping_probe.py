@@ -9,25 +9,28 @@ import sys
 import errno
 import socket
 
-def tcping(host, port=5555, timeout=1):
+def tcping(host, port=65533, timeout=2):
     s = socket.socket()
     s.settimeout(timeout)
+    end = None
     try:
         start = time.time()
         s.connect((host, port))
         s.close()
+        end = time.time()
     except Exception, e:
         if e.errno == errno.ECONNREFUSED:
             end = time.time()
-            ms = 1000*(end-start)
-            return round(ms,2)
+    if end:
+        ms = 1000*(end-start)
+        return round(ms,2)
 
-def ping(host, count):
+def ping(host, count, timeout=2):
     res = []
     for _ in range(count):
-        r = tcping(host, timeout=1)
+        r = tcping(host, timeout=timeout)
         if r:
-            time.sleep((1000 - r)/1000.0)
+            time.sleep((timeout*1000 - r)/1000.0)
         res.append(r)
     return res
 
