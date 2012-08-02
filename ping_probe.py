@@ -10,6 +10,8 @@ import errno
 import socket
 import threading
 
+print_lock = threading.Lock()
+
 def tcping(host, port=65533, timeout=2):
     s = socket.socket()
     s.settimeout(timeout)
@@ -66,8 +68,8 @@ def do_ping(host, count, timeout):
     res = ping_stats(ping(host, count, timeout))
     res["host"] = host
     res["time"] = now
-    #I'm pretty sure a single print statement is thread safe, so no need for locking
-    print format_result(res)
+    with print_lock:
+        print format_result(res)
 
 def go(hosts, count, timeout):
     ts = []
