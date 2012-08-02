@@ -60,10 +60,13 @@ def format_result(res):
         fmt = "check=PING host=%(host)s ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=nan avg_rtt=nan max_rtt=nan"
     return fmt % res
 
+def main(host, count):
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    res = ping_stats(ping(host, count))
+    res["host"] = host
+    print now, format_result(res)
+
 if __name__ == "__main__":
     host = sys.argv[1]
     count = int(sys.argv[2])
-    print datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    res = ping_stats(ping(host, count))
-    res["host"] = host
-    print format_result(res)
+    main(host, count)
