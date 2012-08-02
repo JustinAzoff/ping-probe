@@ -61,18 +61,18 @@ def format_result(res):
         fmt = "%(time)s check=PING host=%(host)s ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=nan avg_rtt=nan max_rtt=nan"
     return fmt % res
 
-def do_ping(host, count):
+def do_ping(host, count, timeout):
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    res = ping_stats(ping(host, count))
+    res = ping_stats(ping(host, count, timeout))
     res["host"] = host
     res["time"] = now
     #I'm pretty sure a single print statement is thread safe, so no need for locking
     print format_result(res)
 
-def go(hosts, count):
+def go(hosts, count, timeout):
     ts = []
     for h in hosts:
-        t = threading.Thread(target=do_ping, args=((h, count)))
+        t = threading.Thread(target=do_ping, args=((h, count, timeout)))
         t.start()
         ts.append(t)
 
@@ -82,5 +82,6 @@ def go(hosts, count):
 
 if __name__ == "__main__":
     count = int(sys.argv[1])
-    hosts = sys.argv[2:]
-    go(hosts, count)
+    timeout = int(sys.argv[2])
+    hosts = sys.argv[3:]
+    go(hosts, count, timeout)
