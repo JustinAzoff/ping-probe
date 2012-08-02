@@ -6,59 +6,61 @@ import time
 import re
 import sys
 
-class PingError(Exception):
-    pass
+import errno
+import socket
 
-def ping(address, count):
-    output, err = Popen(["ping", "-q", "-c", str(count), address], stdout=PIPE, stderr=PIPE).communicate()
-    try :
-        return parse_ping(output)
-    except:
-        raise PingError(err)
-
-def maybe_int(s):
-    if '.' in s:
-        func = float
-    else:
-        func = int
-
+def tcping(host, port=5555, timeout=1):
+    s = socket.socket()
+    s.settimeout(timeout)
     try:
-        return func(s)
-    except ValueError:
-        return s
+        start = time.time()
+        s.connect((host, port))
+        s.close()
+    except Exception, e:
+        if e.errno == errno.ECONNREFUSED:
+            end = time.time()
+            ms = 1000*(end-start)
+            return round(ms,2)
 
+def ping(host, count):
+    res = []
+    for _ in range(count):
+        r = tcping(host, timeout=1)
+        if r:
+            time.sleep((1000 - r)/1000.0)
+        res.append(r)
+    return res
 
-def parse_ping(txt):
-    lines = txt.strip().split("\n")
-    transmitted_line = [x for x in lines if 'transmitted' in x][0]
-    stats_line = [x for x in lines if 'min/avg' in x][0]
+def ping_stats(results):
+    stats = {}
+    not_none = [r for r in results if r is not None]
+    if not not_none:
+        stats = dict.fromkeys(("min","max","avg"), None)
+        stats["loss"] = 100
+    else:
+        stats["min"] = min(not_none)
+        stats["max"] = max(not_none)
+        stats["avg"] = sum(not_none) / len(not_none)
 
-    #5 packets transmitted, 5 received, 0% packet loss, time 4006ms
-    stats = re.match("(?P<sent>\d+) packets transmitted, (?P<received>\d+) received, (?P<loss>\d+)% packet loss,", transmitted_line).groupdict()
+    stats["sent"] = len(results)
+    stats["received"] = len(not_none)
 
-    #rtt min/avg/max/mdev = 9.363/11.902/15.020/2.061 ms, pipe 2
-    parts = re.split("[ /]", stats_line.split(" = ")[1])
-    stats['min'] = parts[0]
-    stats['avg'] = parts[1]
-    stats['max'] = parts[2]
-    stats['mdev'] = parts[3]
-
-
-    for k,v in stats.items():
-        stats[k] = maybe_int(v)
-
+    stats["loss"] = 100*(stats["sent"] - stats["received"]) / stats["sent"]
     stats['ok'] = stats['loss'] < 4
 
     return stats
 
 def format_result(res):
-    fmt = "check=PING host=%(host)s ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=%(min).2f avg_rtt=%(avg).2f max_rtt=%(max).2f"
+    if res["max"]:
+        fmt = "check=PING host=%(host)s ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=%(min).2f avg_rtt=%(avg).2f max_rtt=%(max).2f"
+    else:
+        fmt = "check=PING host=%(host)s ok=%(ok)s sent=%(sent)d received=%(received)d packet_loss=%(loss)d min_rtt=nan avg_rtt=nan max_rtt=nan"
     return fmt % res
 
 if __name__ == "__main__":
     host = sys.argv[1]
     count = int(sys.argv[2])
     print datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    res = ping(host, count)
+    res = ping_stats(ping(host, count))
     res["host"] = host
     print format_result(res)
