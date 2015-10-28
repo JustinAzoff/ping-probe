@@ -15,28 +15,32 @@ print_lock = threading.Lock()
 def tcping(host, port=65533, timeout=2):
     s = socket.socket()
     s.settimeout(timeout)
+    result = False
     end = None
     try:
         start = time.time()
         s.connect((host, port))
         s.close()
+        result = True
         end = time.time()
     except Exception, e:
         if e[0] == errno.ECONNREFUSED:
-            end = time.time()
-    if end:
-        ms = 1000*(end-start)
-        return round(ms,2)
+            result = True
+    end = time.time()
+    ms = 1000*(end-start)
+    return result, round(ms,2)
 
 def ping(host, count, timeout=2):
     res = []
     for _ in range(count):
-        r = tcping(host, timeout=timeout)
+        r, ms = tcping(host, timeout=timeout)
+        delay = (timeout*1000 - ms)/1000.0
+        if delay > 0:
+            time.sleep(delay)
         if r:
-            delay = (timeout*1000 - r)/1000.0
-            if delay > 0:
-                time.sleep(delay)
-        res.append(r)
+            res.append(ms)
+        else:
+            res.append(None)
     return res
 
 def ping_stats(results):
